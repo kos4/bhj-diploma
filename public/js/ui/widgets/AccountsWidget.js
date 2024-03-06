@@ -14,7 +14,13 @@ class AccountsWidget {
    * необходимо выкинуть ошибку.
    * */
   constructor( element ) {
+    if (!element) {
+      throw 'Элемент не передан.';
+    }
 
+    this.element = element;
+    this.registerEvents();
+    this.update();
   }
 
   /**
@@ -25,7 +31,12 @@ class AccountsWidget {
    * вызывает AccountsWidget.onSelectAccount()
    * */
   registerEvents() {
-
+    const elementBtnCreateAcc = document.querySelector('.create-account');
+    elementBtnCreateAcc.addEventListener('click', e => {
+      e.preventDefault();
+      const modal = new Modal(document.getElementById('modal-new-account'));
+      modal.open();
+    });
   }
 
   /**
@@ -39,7 +50,24 @@ class AccountsWidget {
    * метода renderItem()
    * */
   update() {
+    const user = User.current;
+    if (user) {
+      Account.list(user, (err, response) => {
+        if (err) {
+          console.log(`Ошибка ${err.code}. ${err.message}`);
+        } else {
+          if (response.success) {
+            this.clear();
+            response.data.forEach(item => {
+              this.renderItem(item);
+            });
+          } else {
+            console.log(`Ошибка: ${response.error}`);
+          }
+        }
+      });
 
+    }
   }
 
   /**
@@ -48,7 +76,10 @@ class AccountsWidget {
    * в боковой колонке
    * */
   clear() {
-
+    const elementsAcc = this.element.querySelectorAll('.account');
+    elementsAcc.forEach(item => {
+      item.remove();
+    });
   }
 
   /**
@@ -59,7 +90,12 @@ class AccountsWidget {
    * Вызывает App.showPage( 'transactions', { account_id: id_счёта });
    * */
   onSelectAccount( element ) {
-
+    const elementOldActive = this.element.querySelectorAll('.active.account');
+    elementOldActive.forEach(item => {
+      item.classList.toggle('active');
+    });
+    element.classList.toggle('active');
+    App.showPage( 'transactions', { account_id: element.dataset.id });
   }
 
   /**
@@ -68,7 +104,22 @@ class AccountsWidget {
    * item - объект с данными о счёте
    * */
   getAccountHTML(item){
+    const elementAcc = document.createElement('li');
+    elementAcc.className = 'account';
+    elementAcc.dataset.id = item.id;
+    const elementLink = document.createElement('a');
+    elementLink.href = '#';
+    const elementName = document.createElement('span');
+    elementName.innerText = item.name;
+    const nodeText = document.createTextNode(' / ');
+    const elementSum = document.createElement('span');
+    elementSum.innerText = item.sum + ' ₽';
+    elementLink.append(elementName);
+    elementLink.append(nodeText)
+    elementLink.append(elementSum);
+    elementAcc.append(elementLink);
 
+    return elementAcc;
   }
 
   /**
@@ -78,6 +129,10 @@ class AccountsWidget {
    * и добавляет его внутрь элемента виджета
    * */
   renderItem(data){
-
+    const elementAcc = this.getAccountHTML(data);
+    elementAcc.addEventListener('click', e => {
+      this.onSelectAccount(elementAcc);
+    });
+    this.element.append(elementAcc);
   }
 }

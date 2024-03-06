@@ -207,4 +207,16 @@ class App {
     this.getForm("createIncome").renderAccountsList();
     this.getForm("createExpense").renderAccountsList();
   }
+
+  static getModalType(element) {
+    let type;
+    type = element.closest('.menu-item').className;
+    type = type.match('menu-item_[a-zA-Z_0-9\-]+');
+    if (!type) {
+      throw 'Тип модального окна не определен!';
+    }
+    type = type[0].replace('menu-item_', '');
+
+    return type;
+  }
 }
