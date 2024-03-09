@@ -4,21 +4,16 @@
  * */
 const createRequest = (options = {}) => {
   const xhr = new XMLHttpRequest();
-  if (options.responseType) {
-    xhr.responseType = options.responseType;
-  }
-  xhr.addEventListener('readystatechange', () => {
-    if (xhr.readyState === xhr.DONE) {
-      if (xhr.status === 200) {
-        options.callback(null, xhr.response);
-      } else {
-        options.callback({
-          code: xhr.status,
-          message: xhr.responseText,
-        }, xhr.response);
-      }
+  xhr.responseType = 'json';
+  xhr.addEventListener('load', () => {
+    if (xhr.status === 200) {
+      options.callback(null, xhr.response);
+    } else {
+      options.callback({
+        code: xhr.status,
+        message: xhr.responseText,
+      }, xhr.response);
     }
-
   });
 
   if (options.method === 'GET') {

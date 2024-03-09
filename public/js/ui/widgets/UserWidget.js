@@ -13,7 +13,7 @@ class UserWidget {
    * */
   constructor(element){
     if (!element) {
-      throw 'Элемент не передан.';
+      throw new Error('Элемент не передан.');
     }
 
     this.element = element;

@@ -39,22 +39,17 @@ class Sidebar {
     elementMenu.forEach(item => {
       item.addEventListener('click', e => {
         e.preventDefault();
+        const modalType = App.getModalType(item);
 
-        try {
-          const modalType = App.getModalType(item);
-
-          if (modalType === 'logout') {
-            User.logout((err, response) => {
-              if (!err && response.success) {
-                App.setState('init');
-              }
-            });
-          } else {
-            const modal = new Modal(App.getModal(modalType).element);
-            modal.open();
-          }
-        } catch (e) {
-          console.log(e);
+        if (modalType === 'logout') {
+          User.logout((err, response) => {
+            if (!err && response.success) {
+              App.setState('init');
+            }
+          });
+        } else {
+          const modal = App.getModal(modalType);
+          modal.open();
         }
       });
     });

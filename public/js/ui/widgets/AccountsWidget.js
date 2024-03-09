@@ -15,7 +15,7 @@ class AccountsWidget {
    * */
   constructor( element ) {
     if (!element) {
-      throw 'Элемент не передан.';
+      throw new Error('Элемент не передан.');
     }
 
     this.element = element;
@@ -33,8 +33,9 @@ class AccountsWidget {
   registerEvents() {
     const elementBtnCreateAcc = document.querySelector('.create-account');
     elementBtnCreateAcc.addEventListener('click', e => {
+      console.log(1);
       e.preventDefault();
-      const modal = new Modal(document.getElementById('modal-new-account'));
+      const modal = App.getModal('createAccount');
       modal.open();
     });
   }
@@ -50,20 +51,16 @@ class AccountsWidget {
    * метода renderItem()
    * */
   update() {
-    const user = User.current;
+    const user = User.current();
     if (user) {
       Account.list(user, (err, response) => {
         if (err) {
           console.log(`Ошибка ${err.code}. ${err.message}`);
+        } else if (response.success) {
+          this.clear();
+          this.renderItem(response.data);
         } else {
-          if (response.success) {
-            this.clear();
-            response.data.forEach(item => {
-              this.renderItem(item);
-            });
-          } else {
-            console.log(`Ошибка: ${response.error}`);
-          }
+          console.log(`Ошибка: ${response.error}`);
         }
       });
 
@@ -104,22 +101,14 @@ class AccountsWidget {
    * item - объект с данными о счёте
    * */
   getAccountHTML(item){
-    const elementAcc = document.createElement('li');
-    elementAcc.className = 'account';
-    elementAcc.dataset.id = item.id;
-    const elementLink = document.createElement('a');
-    elementLink.href = '#';
-    const elementName = document.createElement('span');
-    elementName.innerText = item.name;
-    const nodeText = document.createTextNode(' / ');
-    const elementSum = document.createElement('span');
-    elementSum.innerText = item.sum + ' ₽';
-    elementLink.append(elementName);
-    elementLink.append(nodeText)
-    elementLink.append(elementSum);
-    elementAcc.append(elementLink);
-
-    return elementAcc;
+    return `
+      <li class="account" data-id="${item.id}">
+        <a href="#">
+          <span>${item.name}</span> /
+          <span>${item.sum} ₽</span>
+        </a>
+      </li>
+    `;
   }
 
   /**
@@ -129,10 +118,12 @@ class AccountsWidget {
    * и добавляет его внутрь элемента виджета
    * */
   renderItem(data){
-    const elementAcc = this.getAccountHTML(data);
-    elementAcc.addEventListener('click', e => {
-      this.onSelectAccount(elementAcc);
+    this.element.insertAdjacentHTML("beforeend", data.reduce((acc, item) => acc + this.getAccountHTML(item), ''));
+    this.element.querySelectorAll('.account').forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        this.onSelectAccount(item);
+      })
     });
-    this.element.append(elementAcc);
   }
 }

@@ -213,7 +213,7 @@ class App {
     type = element.closest('.menu-item').className;
     type = type.match('menu-item_[a-zA-Z_0-9\-]+');
     if (!type) {
-      throw 'Тип модального окна не определен!';
+      throw new Error('Тип модального окна не определен!');
     }
     type = type[0].replace('menu-item_', '');
 

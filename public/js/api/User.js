@@ -30,13 +30,7 @@ class User {
    * из локального хранилища
    * */
   static current() {
-    let user = undefined;
-
-    try {
-      user = JSON.parse(localStorage.getItem('user'));
-    } catch (e) {}
-
-    return user;
+    return JSON.parse(localStorage.getItem('user'));
   }
 
   /**
@@ -51,7 +45,8 @@ class User {
       callback: (err, response) => {
         if (!err) {
           if (response.success) {
-            if (response.user.id !== this.current().id) {
+            const user = this.current();
+            if (user && response.user.id !== user.id) {
               this.setCurrent(response.user);
             }
           } else {

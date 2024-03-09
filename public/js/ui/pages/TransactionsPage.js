@@ -12,7 +12,7 @@ class TransactionsPage {
    * */
   constructor( element ) {
     if (!element) {
-      throw 'Элемент не передан.';
+      throw new Error('Элемент не передан.');
     }
 
     this.element = element;
@@ -55,14 +55,12 @@ class TransactionsPage {
         Account.remove({id: this.lastOptions.account_id}, (err, response) => {
           if (err) {
             console.log(`Ошибка ${err.code}. ${err.message}`);
+          } else if (response.success) {
+            App.updateWidgets();
+            App.updateForms();
+            this.clear();
           } else {
-            if (response.success) {
-              App.updateWidgets();
-              App.updateForms();
-              this.clear();
-            } else {
-              console.log(`Ошибка: ${response.error}`);
-            }
+            console.log(`Ошибка: ${response.error}`);
           }
         });
       }
@@ -80,12 +78,10 @@ class TransactionsPage {
       Transaction.remove({id}, (err, response) => {
         if (err) {
           console.log(`Ошибка ${err.code}. ${err.message}`);
+        } else if (response.success) {
+          App.update();
         } else {
-          if (response.success) {
-            App.update();
-          } else {
-            console.log(`Ошибка: ${response.error}`);
-          }
+          console.log(`Ошибка: ${response.error}`);
         }
       });
     }
@@ -104,24 +100,20 @@ class TransactionsPage {
       Account.get(options.account_id, (err, response) => {
         if (err) {
           console.log(`Ошибка ${err.code}. ${err.message}`);
+        } else if (response.success) {
+          this.renderTitle(response.data.name);
         } else {
-          if (response.success) {
-            this.renderTitle(response.data.name);
-          } else {
-            console.log(`Ошибка: ${response.error}`);
-          }
+          console.log(`Ошибка: ${response.error}`);
         }
       });
 
       Transaction.list(options, (err, response) => {
         if (err) {
           console.log(`Ошибка ${err.code}. ${err.message}`);
+        } else if (response.success) {
+          this.renderTransactions(response.data);
         } else {
-          if (response.success) {
-            this.renderTransactions(response.data);
-          } else {
-            console.log(`Ошибка: ${response.error}`);
-          }
+          console.log(`Ошибка: ${response.error}`);
         }
       });
     }
@@ -174,57 +166,32 @@ class TransactionsPage {
    * item - объект с информацией о транзакции
    * */
   getTransactionHTML(item){
-    const html = {
-      transaction: document.createElement('div'),
-      transactionDetails: document.createElement('div'),
-      transactionIcon: document.createElement('div'),
-      transactionIconFa: document.createElement('span'),
-      transactionInfo: document.createElement('div'),
-      transactionTitle: document.createElement('h4'),
-      transactionDate: document.createElement('div'),
-      colMdThree: document.createElement('div'),
-      transactionSumm: document.createElement('div'),
-      currency: document.createElement('span'),
-      transactionControls: document.createElement('div'),
-      transactionRemove: document.createElement('button'),
-      transactionRemoveFa: document.createElement('i'),
-    };
-    html.transaction.className = `transaction transaction_${item.type} row`;
-    html.transactionDetails.className = 'col-md-7 transaction__details';
-    html.transactionIcon.className = 'transaction__icon';
-    html.transactionIconFa.className = 'fa fa-money fa-2x';
-    html.transactionInfo.className = 'transaction__info';
-    html.transactionTitle.className = 'transaction__title';
-    html.transactionTitle.textContent = item.name;
-    html.transactionDate.className = 'transaction__date';
-    html.transactionDate.textContent = this.formatDate(item.created_at);
-    html.colMdThree.className = 'col-md-3';
-    html.transactionSumm.className = 'transaction__summ';
-    html.transactionSumm.textContent = `${item.sum} `;
-    html.currency.className = 'currency';
-    html.currency.textContent = '₽';
-    html.transactionControls.className = 'col-md-2 transaction__controls';
-    html.transactionRemove.className = 'btn btn-danger transaction__remove';
-    html.transactionRemove.dataset.id = item.id;
-    html.transactionRemoveFa.className = 'fa fa-trash';
-    html.transactionRemove.append(html.transactionRemoveFa);
-    html.transactionRemove.addEventListener('click', e => {
-      e.preventDefault();
-      this.removeTransaction(item.id);
-    });
-    html.transactionControls.append(html.transactionRemove);
-    html.transactionSumm.append(html.currency);
-    html.colMdThree.append(html.transactionSumm);
-    html.transactionInfo.append(html.transactionTitle);
-    html.transactionInfo.append(html.transactionDate);
-    html.transactionIcon.append(html.transactionIconFa);
-    html.transactionDetails.append(html.transactionIcon);
-    html.transactionDetails.append(html.transactionInfo);
-    html.transaction.append(html.transactionDetails);
-    html.transaction.append(html.colMdThree);
-    html.transaction.append(html.transactionControls);
-
-    return html.transaction;
+    return `
+      <div class="transaction transaction_${item.type} row">
+        <div class="col-md-7 transaction__details">
+          <div class="transaction__icon">
+              <span class="fa fa-money fa-2x"></span>
+          </div>
+          <div class="transaction__info">
+              <h4 class="transaction__title">${item.name}</h4>
+              <!-- дата -->
+              <div class="transaction__date">${this.formatDate(item.created_at)}</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="transaction__summ">
+          <!--  сумма -->
+              ${item.sum} <span class="currency">₽</span>
+          </div>
+        </div>
+        <div class="col-md-2 transaction__controls">
+            <!-- в data-id нужно поместить id -->
+            <button class="btn btn-danger transaction__remove" data-id="${item.id}">
+                <i class="fa fa-trash"></i>  
+            </button>
+        </div>
+      </div>
+    `;
   }
 
   /**
@@ -232,12 +199,13 @@ class TransactionsPage {
    * используя getTransactionHTML
    * */
   renderTransactions(data){
-    const html = {
-      content: this.element.querySelector('.content'),
-    };
-    html.content.textContent = '';
-    data.forEach(item => {
-      html.content.append(this.getTransactionHTML(item));
+    const html = this.element.querySelector('.content');
+    html.innerHTML = data.reduce((acc, item) => acc + this.getTransactionHTML(item), '');
+    html.querySelectorAll('.transaction__remove').forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        this.removeTransaction(item.dataset.id);
+      })
     });
   }
 }

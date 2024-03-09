@@ -13,7 +13,7 @@ class TransactionsWidget {
    * */
   constructor( element ) {
     if (!element) {
-      throw 'Элемент не передан.';
+      throw new Error('Элемент не передан.');
     }
 
     this.element = element;
@@ -34,7 +34,7 @@ class TransactionsWidget {
     for(let property in html) {
       html[property].addEventListener('click', e => {
         e.preventDefault();
-        const modal = new Modal(App.getModal(property).element);
+        const modal = App.getModal(property);
         modal.open();
       });
     }

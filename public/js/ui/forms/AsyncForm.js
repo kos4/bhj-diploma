@@ -14,7 +14,7 @@ class AsyncForm {
    * */
   constructor(element) {
     if (!element) {
-      throw 'Элемент не передан.';
+      throw new Error('Элемент не передан.');
     }
 
     this.element = element;
@@ -41,14 +41,7 @@ class AsyncForm {
    * */
   getData() {
     const formData = new FormData(this.element);
-    const entries =  formData.entries();
-    const data = {};
-
-    for (let item of entries) {
-      data[item[0]] = item[1];
-    }
-
-    return data;
+    return Object.fromEntries(formData.entries());
   }
 
   onSubmit(options){
@@ -65,7 +58,11 @@ class AsyncForm {
 
   closeForm() {
     this.element.reset();
-    const modal = new Modal(this.element.closest('.modal'));
+    let modalId = this.element.closest('.modal').dataset.modalId;
+    if (modalId === 'newAccount') {
+      modalId = 'createAccount';
+    }
+    const modal = App.getModal(modalId);
     modal.close();
   }
 
